@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Task, taskService } from '../services/api';
+import { Task } from '../services/api';
 import { TaskForm } from '../components/tasks/TaskForm';
+import { useTasks } from '../hooks/useTasks';
 
 interface CardProps {
   children: React.ReactNode;
@@ -8,7 +9,7 @@ interface CardProps {
 }
 
 const Card: React.FC<CardProps> = ({ children, className = '' }) => {
-  const handleDragStart = (e: React.DragEvent) => {
+  const handleDragStart = () => {
     // Implement drag logic here
   };
 
@@ -24,19 +25,12 @@ const Card: React.FC<CardProps> = ({ children, className = '' }) => {
 };
 
 export const TaskBoard: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { tasks, createTask } = useTasks();
   const [showForm, setShowForm] = useState(false);
 
   const handleCreateTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Mock implementation for now
-      const newTask: Task = {
-        ...taskData,
-        id: Date.now().toString(),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setTasks(prev => [...prev, newTask]);
+      await createTask(taskData);
       setShowForm(false);
     } catch (error) {
       console.error('Error creating task:', error);

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// Para Vercel, usamos caminhos relativos já que está no mesmo deploy
+const API_URL = '/api';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -18,12 +19,26 @@ export interface Task {
   updated_at: string;
 }
 
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
 export const taskService = {
-  getAll: () => api.get<Task[]>('/api/tasks'),
-  getById: (id: string) => api.get<Task>(`/api/tasks/${id}`),
+  getAll: () => api.get<Task[]>('/tasks'),
+  getById: (id: string) => api.get<Task>(`/tasks/${id}`),
   create: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => 
-    api.post<Task>('/api/tasks', task),
+    api.post<Task>('/tasks', task),
   update: (id: string, task: Partial<Task>) => 
-    api.put<Task>(`/api/tasks/${id}`, task),
-  delete: (id: string) => api.delete(`/api/tasks/${id}`),
+    api.put<Task>(`/tasks/${id}`, task),
+  delete: (id: string) => api.delete(`/tasks/${id}`),
+};
+
+export const authService = {
+  login: (email: string, password: string) => 
+    api.post<{ user: User; token: string }>('/auth/login', { email, password }),
+  register: (user: Omit<User, 'id'> & { password: string }) => 
+    api.post<{ user: User; token: string }>('/auth/register', user),
+  getProfile: () => api.get<User>('/auth/profile'),
 };

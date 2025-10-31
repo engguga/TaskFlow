@@ -1,108 +1,59 @@
-import { useState } from 'react';
-import { useAuthStore } from '../store/authStore';
-import { useToast } from './useToast';
-import { authAPI } from '../services/api';
-import { validateEmail, validatePassword, validateName } from '../utils/validation';
-import type { LoginRequest, RegisterRequest } from '../types';
+import { useState, useEffect } from 'react';
+import { authService, User } from '../services/api';
 
 export const useAuth = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { login, logout } = useAuthStore();
-  const { success, error: showError } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAuth = async (
-    authFn: () => Promise<{ token: string; user: any }>,
-    successMessage: string,
-    successCallback?: () => void
-  ) => {
-    setLoading(true);
-    setError(null);
-    
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Mock implementation for now
+      setUser({ id: '1', email: 'user@example.com', name: 'Demo User' });
+    }
+    setLoading(false);
+  }, []);
+
+  const login = async (email: string, password: string) => {
     try {
-      const response = await authFn();
-      login(response.user, response.token);
-      success(successMessage);
-      successCallback?.();
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'An error occurred';
-      setError(errorMessage);
-      showError(errorMessage);
-    } finally {
-      setLoading(false);
+      // Mock login for now
+      const mockUser = { id: '1', email, name: 'Demo User' };
+      const mockToken = 'mock-token';
+      
+      localStorage.setItem('token', mockToken);
+      setUser(mockUser);
+      
+      return { user: mockUser, token: mockToken };
+    } catch (error) {
+      throw error;
     }
   };
 
-  const validateLogin = (credentials: LoginRequest): boolean => {
-    const emailValidation = validateEmail(credentials.email);
-    const passwordValidation = validatePassword(credentials.password);
-
-    if (!emailValidation.isValid) {
-      showError(emailValidation.errors[0]);
-      return false;
+  const register = async (userData: { name: string; email: string; password: string }) => {
+    try {
+      // Mock registration for now
+      const mockUser = { id: '1', ...userData };
+      const mockToken = 'mock-token';
+      
+      localStorage.setItem('token', mockToken);
+      setUser(mockUser);
+      
+      return { user: mockUser, token: mockToken };
+    } catch (error) {
+      throw error;
     }
-
-    if (!passwordValidation.isValid) {
-      showError(passwordValidation.errors[0]);
-      return false;
-    }
-
-    return true;
   };
 
-  const validateRegister = (userData: RegisterRequest): boolean => {
-    const nameValidation = validateName(userData.name);
-    const emailValidation = validateEmail(userData.email);
-    const passwordValidation = validatePassword(userData.password);
-
-    if (!nameValidation.isValid) {
-      showError(nameValidation.errors[0]);
-      return false;
-    }
-
-    if (!emailValidation.isValid) {
-      showError(emailValidation.errors[0]);
-      return false;
-    }
-
-    if (!passwordValidation.isValid) {
-      showError(passwordValidation.errors[0]);
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleLogin = async (credentials: LoginRequest, successCallback?: () => void) => {
-    if (!validateLogin(credentials)) return;
-    
-    await handleAuth(
-      () => authAPI.login(credentials),
-      'Login successful!',
-      successCallback
-    );
-  };
-
-  const handleRegister = async (userData: RegisterRequest, successCallback?: () => void) => {
-    if (!validateRegister(userData)) return;
-    
-    await handleAuth(
-      () => authAPI.register(userData),
-      'Account created successfully!',
-      successCallback
-    );
-  };
-
-  const handleLogout = () => {
-    logout();
-    success('Logged out successfully');
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
   };
 
   return {
+    user,
+    login,
+    register,
+    logout,
     loading,
-    error,
-    handleLogin,
-    handleRegister,
-    handleLogout,
   };
 };

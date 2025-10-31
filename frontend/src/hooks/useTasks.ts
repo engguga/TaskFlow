@@ -1,139 +1,101 @@
 import { useState, useEffect } from 'react';
-import { tasksAPI } from '../services/api';
-import { useToast } from './useToast';
-import { validateTaskTitle, validateDueDate } from '../utils/validation';
-import type { Task, CreateTaskRequest, UpdateTaskRequest } from '../types';
+import { Task, taskService } from '../services/api';
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const { success, error: showError, info } = useToast();
 
-  const fetchTasks = async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  const loadTasks = async () => {
     try {
-      const tasksData = await tasksAPI.getTasks();
-      setTasks(tasksData);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to fetch tasks';
-      setError(errorMessage);
-      showError(errorMessage);
+      setLoading(true);
+      // Mock data for now since API is not fully implemented
+      const mockTasks: Task[] = [
+        {
+          id: '1',
+          title: 'Complete project setup',
+          description: 'Set up the full-stack project structure',
+          status: 'completed',
+          priority: 'high',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '2',
+          title: 'Implement task board',
+          description: 'Create drag and drop task board',
+          status: 'in_progress',
+          priority: 'medium',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        {
+          id: '3',
+          title: 'Add user authentication',
+          description: 'Implement login and registration',
+          status: 'pending',
+          priority: 'high',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ];
+      setTasks(mockTasks);
+    } catch (err) {
+      setError('Failed to load tasks');
     } finally {
       setLoading(false);
     }
   };
 
-  const validateTask = (taskData: CreateTaskRequest): boolean => {
-    const titleValidation = validateTaskTitle(taskData.title);
-    
-    if (!titleValidation.isValid) {
-      showError(titleValidation.errors[0]);
-      return false;
-    }
-
-    if (taskData.due_date) {
-      const dueDateValidation = validateDueDate(taskData.due_date);
-      if (!dueDateValidation.isValid) {
-        showError(dueDateValidation.errors[0]);
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const createTask = async (taskData: CreateTaskRequest): Promise<boolean> => {
-    if (!validateTask(taskData)) return false;
-    
-    setError(null);
+  const createTask = async (taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      const newTask = await tasksAPI.createTask(taskData);
+      const newTask: Task = {
+        ...taskData,
+        id: Date.now().toString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
       setTasks(prev => [...prev, newTask]);
-      success('Task created successfully!');
-      return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to create task';
-      setError(errorMessage);
-      showError(errorMessage);
-      return false;
+      return newTask;
+    } catch (err) {
+      setError('Failed to create task');
+      throw err;
     }
   };
 
-  const updateTask = async (id: number, taskData: UpdateTaskRequest): Promise<boolean> => {
-    if (taskData.title && !validateTaskTitle(taskData.title).isValid) {
-      showError(validateTaskTitle(taskData.title).errors[0]);
-      return false;
-    }
-
-    if (taskData.due_date) {
-      const dueDateValidation = validateDueDate(taskData.due_date);
-      if (!dueDateValidation.isValid) {
-        showError(dueDateValidation.errors[0]);
-        return false;
-      }
-    }
-
-    setError(null);
+  const updateTask = async (id: string, taskData: Partial<Task>) => {
     try {
-      const updatedTask = await tasksAPI.updateTask(id, taskData);
-      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
-      success('Task updated successfully!');
-      return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to update task';
-      setError(errorMessage);
-      showError(errorMessage);
-      return false;
+      setTasks(prev => prev.map(task => 
+        task.id === id 
+          ? { ...task, ...taskData, updated_at: new Date().toISOString() }
+          : task
+      ));
+    } catch (err) {
+      setError('Failed to update task');
+      throw err;
     }
   };
 
-  const deleteTask = async (id: number): Promise<boolean> => {
-    setDeletingId(id);
-    setError(null);
+  const deleteTask = async (id: string) => {
     try {
-      await tasksAPI.deleteTask(id);
       setTasks(prev => prev.filter(task => task.id !== id));
-      success('Task deleted successfully!');
-      return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to delete task';
-      setError(errorMessage);
-      showError(errorMessage);
-      return false;
-    } finally {
-      setDeletingId(null);
+    } catch (err) {
+      setError('Failed to delete task');
+      throw err;
     }
   };
-
-  const updateTaskStatus = async (id: number, status: string): Promise<boolean> => {
-    try {
-      const updatedTask = await tasksAPI.updateTask(id, { status });
-      setTasks(prev => prev.map(task => task.id === id ? updatedTask : task));
-      info(`Task moved to ${status.replace('_', ' ')}`);
-      return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error || 'Failed to update task status';
-      showError(errorMessage);
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    fetchTasks();
-  }, []);
 
   return {
     tasks,
     loading,
     error,
-    deletingId,
-    fetchTasks,
     createTask,
     updateTask,
     deleteTask,
-    updateTaskStatus,
+    refreshTasks: loadTasks,
   };
 };
