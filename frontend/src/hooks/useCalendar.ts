@@ -86,7 +86,7 @@ export const useCalendar = () => {
     setSyncStatus('disconnected');
   };
 
-  const handleGoogleCallback = (code: string) => {
+  const handleGoogleCallback = (_code: string) => {
     // Mock OAuth callback handling
     setSyncStatus('connected');
   };
