@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { calendarService, CalendarEvent } from '../services/calendarApi';
+import { CalendarEvent } from '../services/calendarApi';
 
 export const useCalendar = () => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
 
   useEffect(() => {
     loadEvents();
@@ -65,13 +66,43 @@ export const useCalendar = () => {
     }
   };
 
+  const initGoogleAuth = () => {
+    setSyncStatus('connecting');
+    // Mock Google Auth initialization
+    setTimeout(() => {
+      setSyncStatus('connected');
+    }, 1000);
+  };
+
+  const toggleCalendarSync = () => {
+    if (syncStatus === 'disconnected') {
+      initGoogleAuth();
+    } else {
+      setSyncStatus('disconnected');
+    }
+  };
+
+  const disconnectGoogle = () => {
+    setSyncStatus('disconnected');
+  };
+
+  const handleGoogleCallback = (code: string) => {
+    // Mock OAuth callback handling
+    setSyncStatus('connected');
+  };
+
   return {
     events,
     loading,
     error,
+    syncStatus,
     createEvent,
     updateEvent,
     deleteEvent,
     refreshEvents: loadEvents,
+    initGoogleAuth,
+    toggleCalendarSync,
+    disconnectGoogle,
+    handleGoogleCallback,
   };
 };

@@ -14,7 +14,7 @@ export const useAuth = () => {
     setLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, _password: string) => {
     try {
       setError(null);
       // Mock login for now
