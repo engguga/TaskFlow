@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { authService, User } from '../services/api';
+import { User } from '../services/api';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Mock implementation for now
       setUser({ id: '1', email: 'user@example.com', name: 'Demo User' });
     }
     setLoading(false);
@@ -16,6 +16,7 @@ export const useAuth = () => {
 
   const login = async (email: string, password: string) => {
     try {
+      setError(null);
       // Mock login for now
       const mockUser = { id: '1', email, name: 'Demo User' };
       const mockToken = 'mock-token';
@@ -24,13 +25,15 @@ export const useAuth = () => {
       setUser(mockUser);
       
       return { user: mockUser, token: mockToken };
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      setError('Login failed');
+      throw err;
     }
   };
 
   const register = async (userData: { name: string; email: string; password: string }) => {
     try {
+      setError(null);
       // Mock registration for now
       const mockUser = { id: '1', ...userData };
       const mockToken = 'mock-token';
@@ -39,8 +42,9 @@ export const useAuth = () => {
       setUser(mockUser);
       
       return { user: mockUser, token: mockToken };
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      setError('Registration failed');
+      throw err;
     }
   };
 
@@ -55,5 +59,6 @@ export const useAuth = () => {
     register,
     logout,
     loading,
+    error,
   };
 };
