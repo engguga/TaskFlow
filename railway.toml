@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "./main"
+
+[build.environment]
+NIXPACKS_BUILD_CMD = "cd backend && go build -o main ./cmd"
